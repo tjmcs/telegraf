@@ -1,0 +1,17 @@
+# (c) 2017 DataNexus Inc.  All Rights Reserved
+#
+# Defaults used if a configuration file is not passed into the playbook run
+# using the `config_file` extra variable; deploys to an AWS environment
+---
+# cloud type and VM tags
+cloud: aws
+tenant: datanexus
+project: demo
+domain: production
+# network configuration used when configuring the agents
+internal_subnet: '10.10.1.0/24'
+external_subnet: '10.10.2.0/24'
+# username used to access the system via SSH
+user: 'centos'
+# the default region to search (the us-west-2 EC2 region)
+region: us-west-2

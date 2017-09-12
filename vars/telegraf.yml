@@ -1,0 +1,48 @@
+# (c) 2017 DataNexus Inc.  All Rights Reserved
+#
+# Defaults that are necessary for all deployments of
+# telegraf
+---
+application: telegraf
+
+# the default the configuration that should be used for the telegraf agent;
+# includes the agent configuration as well as the list of values that should
+# be collected and reported by the agent (the measurement_sets); for each
+# measurement_set, the input and output filters are defined along with any
+# input/output-specific configuration parameters that should be used when
+# constructing the configuration file for that measurement_set
+configuration_list:
+  - type: 'agent'
+    config:
+      precision: 1ns
+  - type: 'measurement_set'
+    name: 'metrics'
+    input_filter: 'cpu:disk:diskio:kernel:mem:processes:swap:system'
+    output_filter: 'kafka'
+    config:
+      kafka:
+        topic: metrics
+        json_timestamp_units: 1ns
+  - type: 'measurement_set'
+    name: 'logparser'
+    input_filter: 'logparser'
+    output_filter: 'kafka'
+    config:
+      kafka:
+        topic: logs
+        json_timestamp_units: 1ns
+      logparser:
+        log_paths: ['/var/log/**.log']
+        log_patterns:
+          CUSTOM_SYSLOG: '%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:syslog_hostname} %{DATA:syslog_program}(?:\[%{POSINT:syslog_pid}\])?: %{GREEDYDATA:syslog_message}'
+
+# ports used by Kafka
+kafka_plaintext_port: 9092
+kafka_ssl_port: 9091
+
+# a flag indicating whether or not a secure connection should be used
+# when communicating with Kafka
+secure_kafka_connection: false
+
+# path used to access private keys (defaults to the current working directory)
+private_key_path: "{{playbook_dir}}"

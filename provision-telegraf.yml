@@ -1,0 +1,60 @@
+#!/usr/bin/env ansible-playbook
+#
+# (c) 2017 DataNexus Inc.  All Rights Reserved
+---
+# Build our `{{application}}` (target) and kafka host groups
+- name: Create telegraf and kafka host groups
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/telegraf.yml
+  tasks:
+    # load the 'configuration file' (if one was defined) to get any variables
+    # we might need during this playbook run
+    - name: Load configuration file
+      include_vars:
+        file: "{{config_file | default('config.yml')}}"
+    # regardless of whether the `application` value is still set to the default
+    # `telegraf` value from the `vars/telegraf.yml` file or was reset in the
+    # input `config_file` (above), set a fact for the `localhost` so that
+    # we can use it in our third play (below) to define the target hosts that
+    # we are provisioning with Telegraf agents to using this playbook
+    - set_fact:
+        application: "{{application}}"
+        host_group_list: '{{(application == "kafka") | ternary([{ "name": application }], [{ "name": application },  { "name": "kafka" }])}}'
+    - debug: var=host_group_list
+    # if we're using dynamic provisioning; build the host groups from the
+    # meta-data associated with the matching nodes in the selected cloud
+    - include_role:
+        name: build-app-host-groups
+      when: cloud is defined and (cloud == 'aws' or cloud == 'osp')
+
+# Collect the 'hostvars' facts from the kafka host group
+- name: Gather facts from kafka host group
+  hosts: kafka
+  tasks: []
+
+# Then, deploy our Telegraf agents to the nodes in the application host group
+# that was passed in (or 'the 'telegraf' host group if a separate `application`
+# target wasn't defined in the input configuration file)
+- name: Install/configure telegraf agents
+  hosts: "{{hostvars['localhost']['application']}}"
+  gather_facts: no
+  vars_files:
+    - vars/telegraf.yml
+  vars:
+    - combined_package_list: "{{ (default_packages|default([])) | union(telegraf_package_list|default([])) | union((install_packages_by_tag|default({})).telegraf|default([])) }}"
+    - kafka_nodes: "{{groups['kafka']}}"
+  pre_tasks:
+    # first, initialize the play
+    - include_role:
+        name: initialize-play
+      vars:
+        skip_network_restart: true
+    # and now that we know the name of the `api_iface`, we can construct the
+    # list of kfka_nodes (the `api_iface` IP addresses of our `kafka_nodes`)
+    - set_fact:
+        kfka_nodes: "{{(kafka_nodes | default([])) | map('extract', hostvars, [('ansible_' + api_iface), 'ipv4', 'address']) | list}}"
+  roles:
+    # then provision Telegraf agents to the target nodes
+    - role: telegraf

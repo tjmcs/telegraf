@@ -1,0 +1,16 @@
+# (c) 2017 DataNexus Inc.  All Rights Reserved
+---
+# set a few facts that we'll need in the template (below)
+- set_fact:
+    package_name: influxdb
+    repo_name: "InfluxDB Repository"
+    repo_url: "https://repos.influxdata.com/rhel/$releasever/$basearch/stable"
+    repo_key_url: "https://repos.influxdata.com/influxdb.key"
+# and include that template to build the repository file
+# needed to install telegraf agents on our nodes
+- name: "Add telegraf yum repository file"
+  become: true
+  template:
+    src: centos-repo-template.j2
+    dest: "/etc/yum.repos.d/telegraf.repo"
+    mode: 0644
