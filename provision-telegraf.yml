@@ -30,7 +30,8 @@
     - set_fact:
         num_kafka_nodes: "{{groups['kafka'] | default([]) | length}}"
     # if we didn't find any nodes in the kafka host group, then it's an error
-    - fail:
+    - name: Fail playbook run if an (external) Kafka instance/cluster not found
+      fail:
         msg: "An (external) Kafka cluster is required for telegraf deployments"
       when: num_kafka_nodes | int == 0
 

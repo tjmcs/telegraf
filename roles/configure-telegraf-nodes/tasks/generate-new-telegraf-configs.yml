@@ -15,13 +15,13 @@
 # list, customize the configuration file for that `measurement_set` based on
 # the `config` parameters defined for the inputs declared for that
 # `measurement_set`
-- include: configure-inputs.yml static=no
+- include_tasks: configure-inputs.yml
   with_items: "{{measurement_set_configs}}"
   loop_control:
     loop_var: measurement_set
 # and repeat that process for the outputs declared in each of the
 # `measurement_sets` in the `measurement_set_configs` list
-- include: configure-outputs.yml static=no
+- include_tasks: configure-outputs.yml
   with_items: "{{measurement_set_configs}}"
   loop_control:
     loop_var: measurement_set
