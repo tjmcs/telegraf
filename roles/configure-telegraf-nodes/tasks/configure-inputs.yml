@@ -7,7 +7,7 @@
 # (if such configuration parameters exist)
 - set_fact:
     input_filter_elements: "{{(measurement_set.input_filter | default('')).split(':')}}"
-- include: configure-input.yml static=no
+- include_tasks: configure-input.yml
   with_items: "{{input_filter_elements}}"
   loop_control:
     loop_var: input_filter_entry

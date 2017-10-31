@@ -1,7 +1,7 @@
 # (c) 2017 DataNexus Inc.  All Rights Reserved
 ---
 - name: Start telegraf agents
-  include: start-telegraf-service.yml static=no
+  include_tasks: start-telegraf-service.yml
   with_items:
     - metrics
     - logs

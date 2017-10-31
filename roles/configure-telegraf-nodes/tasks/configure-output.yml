@@ -11,6 +11,5 @@
 - local_action: stat path="{{config_filename}}"
   register: check_path
 # if so, then include that file (to customize that `output_filter_entry`)
-- include: "{{config_filename}}"
-  static: no
+- include_tasks: "{{config_filename}}"
   when: check_path.stat.exists
