@@ -1,0 +1,51 @@
+# (c) 2017 DataNexus Inc.  All Rights Reserved
+---
+# Configure the agent section of the configuration file based on the input
+# agent_config
+- set_fact:
+    precision: '{{(agent_config.config | default({})).precision | default("1ns")}}'
+# Then customize the Kafka output section of the configuration file associated
+# with the input `measurement_set` file to include those parameters; it should
+# be noted here that the current version of the playbook only supports outputting
+# data in a JSON data format; to support other formats additional changes to this
+# task file will be necessary)
+- block:
+  - name: Delete the default telegraf agent configuration
+    file:
+      path: "/etc/telegraf/telegraf.conf"
+      state: absent
+  - name: Create a new (empty) configuration file
+    shell: telegraf --input-filter '' --output-filter '' config > /etc/telegraf/telegraf.conf
+  - name: Configure the default configuration to match the agent configuration
+    replace:
+      dest: "/etc/telegraf/telegraf.conf"
+      regexp: "{{ item.regexp }}"
+      replace: "{{ item.replace }}"
+    with_items:
+      - { regexp: '^(#)?(.*)precision = (.*)$' , replace: '\g<2>precision = "{{precision}}"' }
+  - name: Ensure the default (influxdb) output and default inputs are disabled
+    replace:
+      dest: "/etc/telegraf/telegraf.conf"
+      regexp: "{{ item.regexp }}"
+      replace: "{{ item.replace }}"
+    with_items:
+    - { regexp: '^(\[\[outputs\.influxdb\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^([ ]*)(urls =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(database =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(retention_policy =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(write_consistency =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(timeout =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^(\[\[inputs\.cpu\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^([ ]*)(percpu =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(totalcpu =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(collect_cpu_time =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^([ ]*)(report_active =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^(\[\[inputs\.disk\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^([ ]*)(ignore_fs =.*)$' , replace: '#\g<1>\g<2>' }
+    - { regexp: '^(\[\[inputs\.diskio\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^(\[\[inputs\.kernel\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^(\[\[inputs\.mem\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^(\[\[inputs\.processes\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^(\[\[inputs\.swap\]\])$' , replace: '#\g<1>' }
+    - { regexp: '^(\[\[inputs\.system\]\])$' , replace: '#\g<1>' }
+  become: true

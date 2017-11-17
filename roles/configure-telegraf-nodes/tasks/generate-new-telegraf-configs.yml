@@ -4,6 +4,11 @@
 - set_fact:
     measurement_set_configs: "{{configuration_list | selectattr('type', 'equalto', 'measurement_set') | list}}"
     agent_config: "{{configuration_list | selectattr('type', 'equalto', 'agent') | list}}"
+# Then, modify the default configuration file created during the package install
+# (remove the default, influxdb output and configure the agent section properly)
+- name: Modify the default telegraf configuration file created during the install
+  include_tasks: configure-agent.yml
+  become: true
 # Then, generate a set of configuration files using the `telegraf` command
 # (one file per defined `measurement_set`) based on the input and output
 # filters defined in the `measurement_set_configs`
